@@ -1,0 +1,129 @@
+name: Generate LighAura hero on GPU
+
+on:
+  workflow_dispatch:
+    inputs:
+      initial_image_url:
+        description: "Direct URL to the clean LighAura starting keyframe"
+        required: true
+        type: string
+      preset:
+        description: "Preset JSON path"
+        required: true
+        default: "video_engine/presets/lighaura_hero.json"
+        type: string
+      output_name:
+        description: "Artifact/output folder name"
+        required: true
+        default: "lighaura-hero-wan22"
+        type: string
+      shutdown_runner:
+        description: "Schedule machine shutdown after the artifact is uploaded"
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: wan-gpu-generation
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  WAN_DIR: /opt/lighaura/Wan2.2
+  MODEL_DIR: /opt/lighaura/models/Wan2.2-TI2V-5B
+  VENV_DIR: /opt/lighaura/venv
+  HF_HOME: /opt/lighaura/hf-cache
+
+jobs:
+  generate:
+    name: Wan2.2 TI2V-5B generation
+    runs-on: [self-hosted, linux, x64, wan-gpu]
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: GPU preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          nvidia-smi
+          test -x "$VENV_DIR/bin/python"
+          "$VENV_DIR/bin/python" - <<'PY'
+          import torch
+          assert torch.cuda.is_available(), "CUDA is not available to PyTorch"
+          p = torch.cuda.get_device_properties(0)
+          print(f"GPU: {p.name}")
+          print(f"VRAM: {p.total_memory / 1024**3:.1f} GiB")
+          if p.total_memory < 23 * 1024**3:
+              raise SystemExit("At least ~24 GiB VRAM is required for the default TI2V-5B profile")
+          PY
+          ffmpeg -version | head -n 1
+          test -f "$WAN_DIR/generate.py"
+          test -d "$MODEL_DIR"
+
+      - name: Download starting keyframe
+        shell: bash
+        env:
+          INITIAL_IMAGE_URL: ${{ inputs.initial_image_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p input
+          curl --fail --location --retry 4 --retry-delay 3 \
+            "$INITIAL_IMAGE_URL" \
+            --output input/lighaura-hero-start.png
+          file input/lighaura-hero-start.png
+          test -s input/lighaura-hero-start.png
+
+      - name: Generate real Wan2.2 hero film
+        shell: bash
+        env:
+          PRESET: ${{ inputs.preset }}
+          OUTPUT_NAME: ${{ inputs.output_name }}
+        run: |
+          set -euo pipefail
+          rm -rf "output/$OUTPUT_NAME"
+          mkdir -p "output/$OUTPUT_NAME"
+          "$VENV_DIR/bin/python" video_engine/orchestrate.py \
+            --preset "$PRESET" \
+            --wan-dir "$WAN_DIR" \
+            --model-dir "$MODEL_DIR" \
+            --output-dir "output/$OUTPUT_NAME"
+
+      - name: Inspect generated master
+        shell: bash
+        env:
+          OUTPUT_NAME: ${{ inputs.output_name }}
+        run: |
+          set -euo pipefail
+          MASTER="output/$OUTPUT_NAME/lighaura-hero-master.mp4"
+          test -s "$MASTER"
+          ffprobe -v error \
+            -show_entries format=duration,size \
+            -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames \
+            -of json "$MASTER"
+          find "output/$OUTPUT_NAME/scroll_frames" -type f -name '*.webp' | wc -l
+
+      - name: Upload generated film and scroll assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.output_name }}
+          path: |
+            output/${{ inputs.output_name }}/lighaura-hero-master.mp4
+            output/${{ inputs.output_name }}/manifest.json
+            output/${{ inputs.output_name }}/clips/*.mp4
+            output/${{ inputs.output_name }}/refs/*.png
+            output/${{ inputs.output_name }}/scroll_frames/*.webp
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Schedule GPU machine shutdown
+        if: ${{ always() && inputs.shutdown_runner }}
+        shell: bash
+        run: |
+          echo "Scheduling shutdown in 2 minutes so GitHub can receive the final job status."
+          sudo shutdown -h +2 || true
