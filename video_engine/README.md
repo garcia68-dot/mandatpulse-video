@@ -26,7 +26,7 @@ The official Wan2.2 project supports text+image-to-video at 720p / 24 fps. The T
 
 The model weights are **not** committed here.
 
-## Install the inference backend
+## Install the inference backend manually
 
 ```bash
 git clone https://github.com/Wan-Video/Wan2.2.git external/Wan2.2
@@ -62,6 +62,53 @@ python video_engine/orchestrate.py \
 
 This creates separate generated clips, extracts the last frame of each clip for continuity, concatenates them, then exports scroll frames.
 
+## GitHub -> GPU runner -> Wan2.2
+
+The branch now includes a real GPU workflow at `.github/workflows/video-engine-gpu.yml`.
+It deliberately targets a self-hosted runner with the `wan-gpu` label rather than a normal GitHub-hosted runner.
+
+### 1. Prepare a rented NVIDIA machine
+
+On an Ubuntu GPU host with about 24 GB VRAM or more, clone this branch and run:
+
+```bash
+bash video_engine/runner/bootstrap_gpu_host.sh
+```
+
+The bootstrap installs/validates FFmpeg, CUDA-enabled PyTorch, Wan2.2 and the public `Wan-AI/Wan2.2-TI2V-5B` weights under `/opt/lighaura`.
+
+### 2. Register the machine as a GitHub runner
+
+In GitHub open:
+
+`Settings -> Actions -> Runners -> New self-hosted runner`
+
+Copy the short-lived registration token, then on the GPU machine run:
+
+```bash
+export GITHUB_RUNNER_TOKEN='...'
+bash video_engine/runner/install_github_runner.sh
+```
+
+The runner registers with the custom label `wan-gpu` and installs itself as a system service.
+
+### 3. Launch a real generation
+
+From GitHub Actions choose **Generate LighAura hero on GPU**, paste a direct URL for the clean starting keyframe, and run the workflow.
+
+The job performs:
+
+- GPU/VRAM preflight
+- reference-image download
+- three real Wan2.2 temporal generations (`assembly`, `reveal`, `dolly_out_to_shop`)
+- last-frame chaining between shots
+- FFmpeg concatenation
+- WebP scroll-frame export
+- GitHub artifact upload
+- optional delayed host shutdown after upload
+
+The resulting GitHub artifact contains the master MP4, individual clips, continuity reference frames, manifest, and browser scroll frames.
+
 ## Fine-tuning strategy
 
 Do **not** train a foundation video model from zero. Start from Wan2.2 and fine-tune LoRAs for narrow capabilities such as:
@@ -76,4 +123,4 @@ DiffSynth-Studio already provides Wan2.2 LoRA / full-training infrastructure, so
 
 ## Current limitation
 
-This repository can orchestrate and render a genuine generative-video pipeline, but actual Wan inference requires a CUDA GPU. Standard GitHub-hosted Actions runners do not provide the required GPU, so generation must run on a GPU workstation, a self-hosted GitHub runner, or a GPU cloud runner. The included CI only validates the orchestration code and presets.
+The orchestration and GitHub-to-GPU path are implemented. The remaining external dependency is an actual CUDA GPU host registered as the `wan-gpu` self-hosted runner. Standard GitHub-hosted Actions runners cannot execute the Wan inference step.
