@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "start": "remotion studio src/index.ts",
-    "render": "remotion render src/index.ts MandatPulse out/mandatpulse.mp4 --codec=h264 --crf=18"
+    "render": "remotion render src/index.ts MandatPulse out/mandatpulse.mp4 --codec=h264 --crf=18",
+    "render:mandatpulse": "remotion render src/index.ts MandatPulse out/mandatpulse.mp4 --codec=h264 --crf=18",
+    "render:lighaura": "remotion render src/index.ts LighAuraStory docs/lighaura-story.mp4 --codec=h264 --crf=18"
   },
   "dependencies": {
     "@remotion/cli": "4.0.332",
