@@ -10,6 +10,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: lighaura-render
+  cancel-in-progress: true
+
 jobs:
   render:
     runs-on: ubuntu-latest
@@ -34,6 +38,11 @@ jobs:
       - name: Publish render result
         if: always()
         run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "A newer commit exists; this stale render will not be published."
+            exit 0
+          fi
           mkdir -p docs
           echo "${{ steps.render.outcome }}" > docs/render-status.txt
           tail -c 20000 render.log > docs/render-log.txt || true
