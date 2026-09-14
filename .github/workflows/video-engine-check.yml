@@ -1,0 +1,53 @@
+name: Validate LighAura video engine
+
+on:
+  push:
+    branches:
+      - video-engine-wan22
+  pull_request:
+    paths:
+      - 'video_engine/**'
+      - '.github/workflows/video-engine-*.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile Python orchestration
+        run: |
+          python -m py_compile video_engine/wan22_clip.py video_engine/orchestrate.py
+
+      - name: Validate LighAura preset
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('video_engine/presets/lighaura_hero.json')
+          data = json.loads(p.read_text())
+          assert data['task'] == 'ti2v-5B'
+          assert data['size'] == '1280*704'
+          assert data['initial_image'] == 'input/lighaura-hero-start.png'
+          assert len(data['shots']) >= 3
+          for shot in data['shots']:
+              assert shot['frames'] % 4 == 1
+              assert shot['prompt'].strip()
+          print('Preset OK:', [s['id'] for s in data['shots']])
+          PY
+
+      - name: Validate runner bootstrap scripts
+        run: |
+          bash -n video_engine/runner/bootstrap_gpu_host.sh
+          bash -n video_engine/runner/install_github_runner.sh
+
+      - name: Check GPU workflow contract
+        run: |
+          grep -F 'runs-on: [self-hosted, linux, x64, wan-gpu]' .github/workflows/video-engine-gpu.yml
+          grep -F 'actions/upload-artifact@v4' .github/workflows/video-engine-gpu.yml
+          grep -F 'video_engine/orchestrate.py' .github/workflows/video-engine-gpu.yml
+
+      - name: Verify CLI help
+        run: |
+          python video_engine/wan22_clip.py --help >/dev/null
+          python video_engine/orchestrate.py --help >/dev/null

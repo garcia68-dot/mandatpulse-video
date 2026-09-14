@@ -1,0 +1,29 @@
+{
+  "name": "LighAuraMG immersive hero",
+  "task": "ti2v-5B",
+  "size": "1280*704",
+  "seed": 68018,
+  "initial_image": "input/lighaura-hero-start.png",
+  "master_name": "lighaura-hero-master.mp4",
+  "scroll_fps": 12,
+  "shots": [
+    {
+      "id": "assembly",
+      "frames": 121,
+      "seed": 68021,
+      "prompt": "Cinematic luxury product film. Preserve exactly the same black gaming headset design, champagne-gold trim, scarlet light strips, platform, white silver architecture, moon, mountains and framing from the input image. The headset begins in an elegant exploded mechanical state and assembles physically in mid-air: rigid earcup shells, cushions, drivers, hinges, headband and microphone follow precise smooth paths and lock together. Parts remain rigid with no melting or morphing. The camera makes only a subtle slow dolly-in. Premium supercar and watch-advertising aesthetic, realistic metallic reflections, controlled mist, fine golden energy filaments, coherent perspective, no text deformation, no duplicated parts, no sudden cuts."
+    },
+    {
+      "id": "reveal",
+      "frames": 121,
+      "seed": 68022,
+      "prompt": "Continue seamlessly from the exact previous generated frame. The now fully assembled LighAuraMG headset levitates above the illuminated circular platform. Preserve product identity and geometry. Perform a very slow controlled three-quarter orbital rotation of the headset while the scarlet light strips activate progressively and champagne-gold reflections travel naturally across the metal surfaces. Subtle fog curls beneath the product. The background architecture, moon and mountains remain stable. Cinematic luxury product reveal, physically plausible camera and lighting, no morphing, no redesign, no extra objects, no abrupt zoom, no text changes."
+    },
+    {
+      "id": "dolly_out_to_shop",
+      "frames": 121,
+      "seed": 68023,
+      "prompt": "Continue seamlessly from the previous generated frame. Preserve the exact headset, platform, lighting and environment. The camera performs a smooth slow dolly-out and slight crane-up, revealing more of the premium ecommerce landing page beneath the hero platform. The headset stays floating and stable while becoming smaller in frame naturally due to camera movement. The lower collection area gradually enters view with four coherent premium gaming product cards: headset, mechanical keyboard, ultralight mouse and gaming monitor. Maintain the white, metallic silver, champagne-gold and scarlet visual system. No object morphing, no sudden transitions, no duplicated products, no warped typography, no jump cuts."
+    }
+  ]
+}
