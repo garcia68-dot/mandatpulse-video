@@ -1,0 +1,1 @@
+Render LighAuraStory using the finalized Remotion composition.
