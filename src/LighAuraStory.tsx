@@ -17,11 +17,11 @@ const ease = Easing.inOut(Easing.cubic);
 
 const FRAMES = [
   // 01 — Accroche / apparition dans la brume
-  'https://d2ol7oe51mr4n9.cloudfront.net/user_3JC2KrTgsjqbB57ToMi30MBd9J1/03943bb1-2ffb-4053-84f4-723abf7c66fe.png',
+  'https://d2ol7oe51mr4n9.cloudfront.net/user_3JC2KrTgsjqbB57ToMi30MBd9J1/7e18893d-ee13-496b-b8f5-283b49ed2bcd.png',
   // 02 — Assemblage éclaté du casque
   'https://d2ol7oe51mr4n9.cloudfront.net/user_3JC2KrTgsjqbB57ToMi30MBd9J1/817cbcd5-7fcb-4416-91aa-314c2dadeb21.png',
   // 03 — Révélation du casque assemblé
-  'https://d2ol7oe51mr4n9.cloudfront.net/user_3JC2KrTgsjqbB57ToMi30MBd9J1/7e18893d-ee13-496b-b8f5-283b49ed2bcd.png',
+  'https://d2ol7oe51mr4n9.cloudfront.net/user_3JC2KrTgsjqbB57ToMi30MBd9J1/03943bb1-2ffb-4053-84f4-723abf7c66fe.png',
   // 04 — Hero close-up premium
   'https://d2ol7oe51mr4n9.cloudfront.net/user_3JC2KrTgsjqbB57ToMi30MBd9J1/0da8c5d1-b89d-4e67-aa63-40e7488512c5.png',
   // 05 — Transition vers la collection
@@ -101,7 +101,6 @@ export const LighAuraStory: React.FC = () => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
 
-  // Light pulses hide layout changes while keeping the film premium rather than slideshow-like.
   const flash = Math.max(
     transitionPulse(frame, 64, 8, 0.26),
     transitionPulse(frame, 130, 8, 0.24),
@@ -119,7 +118,6 @@ export const LighAuraStory: React.FC = () => {
         <StoryFrame key={shot.src} shot={shot} index={index} />
       ))}
 
-      {/* Champagne/white highlight between keyframes */}
       <AbsoluteFill
         style={{
           pointerEvents: 'none',
@@ -130,7 +128,6 @@ export const LighAuraStory: React.FC = () => {
         }}
       />
 
-      {/* Scarlet energy cue: deliberately subtle, like an instrument/status light. */}
       <div
         style={{
           position: 'absolute',
@@ -145,7 +142,6 @@ export const LighAuraStory: React.FC = () => {
         }}
       />
 
-      {/* Soft lens vignette keeps attention on the product and avoids flat image-sequence feel. */}
       <AbsoluteFill
         style={{
           pointerEvents: 'none',
