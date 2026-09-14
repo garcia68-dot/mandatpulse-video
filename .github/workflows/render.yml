@@ -1,25 +1,37 @@
-name: Render MandatPulse video
+name: Render LighAura storyboard
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+
+permissions:
+  contents: write
 
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm install
-      - name: Render MP4
-        run: npm run render
-      - name: Upload MP4
+      - name: Render LighAura MP4
+        run: npm run render:lighaura
+      - name: Upload MP4 artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mandatpulse-video
-          path: out/mandatpulse.mp4
+          name: lighaura-storyboard
+          path: docs/lighaura-story.mp4
           retention-days: 30
+      - name: Publish MP4 to GitHub Pages source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/lighaura-story.mp4
+          git diff --cached --quiet || git commit -m "Publish LighAura storyboard MP4"
+          git push
