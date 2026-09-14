@@ -21,17 +21,28 @@ jobs:
           node-version: 24
       - run: npm install
       - name: Render LighAura MP4
-        run: npm run render:lighaura
+        id: render
+        continue-on-error: true
+        run: npm run render:lighaura 2>&1 | tee render.log
       - name: Upload MP4 artifact
+        if: steps.render.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: lighaura-storyboard
           path: docs/lighaura-story.mp4
           retention-days: 30
-      - name: Publish MP4 to GitHub Pages source
+      - name: Publish render result
+        if: always()
         run: |
+          mkdir -p docs
+          echo "${{ steps.render.outcome }}" > docs/render-status.txt
+          tail -c 20000 render.log > docs/render-log.txt || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/lighaura-story.mp4
-          git diff --cached --quiet || git commit -m "Publish LighAura storyboard MP4"
+          git add docs/render-status.txt docs/render-log.txt
+          if [ -f docs/lighaura-story.mp4 ]; then git add docs/lighaura-story.mp4; fi
+          git diff --cached --quiet || git commit -m "Publish LighAura storyboard render result"
           git push
+      - name: Fail workflow if render failed
+        if: steps.render.outcome != 'success'
+        run: exit 1
